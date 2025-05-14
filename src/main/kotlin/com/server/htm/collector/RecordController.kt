@@ -34,7 +34,7 @@ class RecordController(
     }
 
     @PutMapping("{travelId}/end")
-    fun startRecord(
+    fun endRecord(
         @PathVariable("travelId") travelId: String
     ): Response{
         return recordService.endRecord(travelId)
@@ -44,5 +44,17 @@ class RecordController(
     fun getRawPath(
     ): GetRawPathsRes{
         return recordService.getRawPath()
+    }
+
+    @GetMapping("path/filtered")
+    fun getFilterPath(
+    ): GetRawPathsRes{
+        return recordService.getFilteredPath()
+    }
+
+    @PostMapping("all/filter")
+    fun filterAllRecord(
+    ): Response {
+        return recordService.filterAllRecord()
     }
 }
