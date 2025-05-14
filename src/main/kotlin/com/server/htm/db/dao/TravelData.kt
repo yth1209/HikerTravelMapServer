@@ -30,6 +30,9 @@ data class TravelData(
     @JdbcTypeCode(SqlTypes.GEOMETRY)
     val gps: Point, // Consider using custom Point type
 
+    @Column(name = "accuracy")
+    val accuracy: Double = -1.0,
+
     @Enumerated(EnumType.STRING)
     @Column(name = "activity")
     val activity: ActivityType,

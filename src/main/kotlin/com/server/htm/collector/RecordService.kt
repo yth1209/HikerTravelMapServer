@@ -51,6 +51,7 @@ class RecordService(
             TravelData(
                 travelId = travel.id,
                 gps = geometryFactory.createPoint(Coordinate(req.lng, req.lat)),
+                accuracy = req.accuracy,
                 activity = ActivityType.valueOf(req.activityType)
             )
         )
@@ -82,7 +83,14 @@ class RecordService(
     ): GetRawPathsRes{
         return GetRawPathsRes(
             paths = travelGpsPathRepo.findAll().map {
-                it.rawPath.coordinates.map { listOf(it.x, it.y) }
+                it.rawPath.coordinates
+                    .map { listOf(it.x, it.y) }
+                    .fold(mutableListOf()) { acc, current ->
+                        if (acc.isEmpty() || (acc.last()[0] != current[0] && acc.last()[0] != current[0])) {
+                            acc.add(current)
+                        }
+                        acc
+                    }
             }
         )
     }
