@@ -17,5 +17,8 @@ data class TravelGpsPath(
     val rawPath: LineString,
 
     @Column(name = "filtered_path", columnDefinition = "geometry(LineString, 4326)")
-    var filteredPath: LineString? = null
+    var filteredPath: LineString? = null,
+
+    @Column(name = "segment_path", columnDefinition = "geometry(LineString, 4326)")
+    var segmentPath: LineString? = null
 )

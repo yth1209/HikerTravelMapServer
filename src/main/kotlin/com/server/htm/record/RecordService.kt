@@ -1,9 +1,9 @@
-package com.server.htm.collector
+package com.server.htm.record
 
-import com.server.htm.collector.dto.GetRawPathsRes
-import com.server.htm.collector.dto.PostDataReq
-import com.server.htm.collector.dto.StartRecordReq
-import com.server.htm.collector.model.GPSFilter
+import com.server.htm.record.dto.GetRawPathsRes
+import com.server.htm.record.dto.PostDataReq
+import com.server.htm.record.dto.StartRecordReq
+import com.server.htm.common.model.GPSFilter
 import com.server.htm.common.dto.Response
 import com.server.htm.common.enum.ActivityType
 import com.server.htm.common.enum.RecordStatus
@@ -15,15 +15,9 @@ import com.server.htm.db.repo.TravelGpsPathRepository
 import com.server.htm.db.repo.TravelRepository
 import org.locationtech.jts.geom.Coordinate
 import org.locationtech.jts.geom.GeometryFactory
-import org.locationtech.jts.geom.LineString
-import org.locationtech.jts.geom.Point
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
-import java.time.Instant
 import java.time.OffsetDateTime
-import java.time.ZoneId
-import java.time.ZoneOffset
-import kotlin.math.*
 
 @Service
 class RecordService(

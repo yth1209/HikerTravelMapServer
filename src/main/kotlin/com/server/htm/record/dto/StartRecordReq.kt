@@ -1,4 +1,4 @@
-package com.server.htm.collector.dto
+package com.server.htm.record.dto
 
 class StartRecordReq(
     val travelId: String

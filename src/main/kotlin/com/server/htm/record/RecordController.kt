@@ -1,8 +1,8 @@
-package com.server.htm.collector
+package com.server.htm.record
 
-import com.server.htm.collector.dto.GetRawPathsRes
-import com.server.htm.collector.dto.PostDataReq
-import com.server.htm.collector.dto.StartRecordReq
+import com.server.htm.record.dto.GetRawPathsRes
+import com.server.htm.record.dto.PostDataReq
+import com.server.htm.record.dto.StartRecordReq
 import com.server.htm.common.dto.Response
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
