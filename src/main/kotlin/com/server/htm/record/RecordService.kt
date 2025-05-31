@@ -17,8 +17,10 @@ import com.server.htm.db.repo.TravelGpsPathRepository
 import com.server.htm.db.repo.TravelRelaxZoneRepository
 import com.server.htm.db.repo.TravelRepository
 import jakarta.transaction.Transactional
+import org.locationtech.jts.algorithm.ConvexHull
 import org.locationtech.jts.geom.Coordinate
 import org.locationtech.jts.geom.GeometryFactory
+import org.locationtech.jts.geom.Polygon
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import java.time.OffsetDateTime
@@ -174,13 +176,16 @@ class RecordService(
                     it.cnt > 20
                 }
                 .map { cluster ->
+                    val points = geometryFactory.createMultiPoint(
+                        cluster.points.map {
+                            geometryFactory.createPoint(it)
+                        }.toTypedArray()
+                    )
+
                     TravelRelaxZone(
                         travelId = travelId,
-                        area = geometryFactory.createMultiPoint(
-                            cluster.points.map {
-                                geometryFactory.createPoint(it)
-                            }.toTypedArray()
-                        ),
+                        points = points,
+                        area = ConvexHull(points).convexHull as? Polygon,
                         type = "0",
                         cnt = cluster.cnt
                     )

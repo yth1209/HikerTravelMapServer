@@ -6,6 +6,7 @@ import jakarta.persistence.Id
 import jakarta.persistence.Table
 import org.locationtech.jts.geom.MultiPoint
 import org.locationtech.jts.geom.Point
+import org.locationtech.jts.geom.Polygon
 import java.util.UUID
 
 @Entity
@@ -18,8 +19,11 @@ data class TravelRelaxZone(
     @Column(name = "travel_id")
     val travelId: String,
 
-    @Column(name = "area", columnDefinition = "geometry((multipoint, 4326)")
-    val area: MultiPoint,
+    @Column(name = "points", columnDefinition = "geometry((multipoint, 4326)")
+    val points: MultiPoint,
+
+    @Column(name = "area", columnDefinition = "geometry((polygon, 4326)")
+    val area: Polygon? = null,
 
     @Column(name = "type")
     val type: String,
