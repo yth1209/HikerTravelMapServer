@@ -1,23 +1,25 @@
 package com.server.htm.db.dao
 
+import com.server.htm.common.uuid
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.Id
 import jakarta.persistence.Table
+import org.locationtech.jts.geom.Polygon
 
 @Entity
 @Table(name = "relax_zone")
 data class RelaxZone(
     @Id
     @Column(name = "id")
-    val id: String,
+    val id: String = uuid(),
 
-    @Column(name = "area", columnDefinition = "polygon")
-    val area: String,
+    @Column(name = "area", columnDefinition = "geometry((polygon, 4326)")
+    var area: Polygon,
 
     @Column(name = "type")
-    val type: String,
+    val type: String = "0",
 
     @Column(name = "cnt")
-    val cnt: Int
+    var cnt: Int
 )

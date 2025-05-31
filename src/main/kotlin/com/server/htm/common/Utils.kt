@@ -1,7 +1,10 @@
 package com.server.htm.common
 
 import org.locationtech.jts.geom.Coordinate
+import java.util.UUID
 import kotlin.math.*
+
+fun uuid() = UUID.randomUUID().toString().replace("-", "")
 
 fun haversineDistance(point1: Coordinate, point2: Coordinate): Double =
     haversineDistance(point1.y, point1.x, point2.y, point2.x)

@@ -17,4 +17,10 @@ class TraclusController(
     ): Response {
         return traclusService.partitionAll()
     }
+
+    @PostMapping("global/relaxzone/all")
+    fun globalRelaxZone(
+    ): Response {
+        return traclusService.globalRelaxZone()
+    }
 }
