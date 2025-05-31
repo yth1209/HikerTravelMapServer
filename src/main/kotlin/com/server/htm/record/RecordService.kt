@@ -7,25 +7,32 @@ import com.server.htm.common.model.GPSFilter
 import com.server.htm.common.dto.Response
 import com.server.htm.common.enum.ActivityType
 import com.server.htm.common.enum.RecordStatus
+import com.server.htm.common.model.RelaxZoneCluster
 import com.server.htm.db.dao.Travel
 import com.server.htm.db.dao.TravelData
 import com.server.htm.db.dao.TravelGpsPath
+import com.server.htm.db.dao.TravelRelaxZone
 import com.server.htm.db.repo.TravelDataRepository
 import com.server.htm.db.repo.TravelGpsPathRepository
+import com.server.htm.db.repo.TravelRelaxZoneRepository
 import com.server.htm.db.repo.TravelRepository
+import jakarta.transaction.Transactional
 import org.locationtech.jts.geom.Coordinate
 import org.locationtech.jts.geom.GeometryFactory
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import java.time.OffsetDateTime
+import kotlin.collections.component1
+import kotlin.collections.component2
 
 @Service
 class RecordService(
     private val travelRepo: TravelRepository,
     private val travelDataRepo: TravelDataRepository,
-    private val travelGpsPathRepo: TravelGpsPathRepository
+    private val travelGpsPathRepo: TravelGpsPathRepository,
+    private val travelRelaxZoneRepo: TravelRelaxZoneRepository,
 
-) {
+    ) {
     private val geometryFactory = GeometryFactory()
 
     fun startRecord(req: StartRecordReq): Response {
@@ -69,8 +76,9 @@ class RecordService(
 
         val datas = travelDataRepo.findAllByTravelIdOrderByTimestamp(travel.id)
         val rawPath = geometryFactory.createLineString(datas.mapNotNull { it.gps.coordinate }.toTypedArray())
-        val filteredPath = GPSFilter(datas).filteredLineStr()
 
+        val gpsFilter = GPSFilter(datas)
+        val filteredPath = gpsFilter.filteredLineStr
         travelGpsPathRepo.save(
             TravelGpsPath(
                 travelId = travel.id,
@@ -78,17 +86,22 @@ class RecordService(
                 filteredPath = filteredPath
             )
         )
+        saveTravelRelaxZone(gpsFilter, travel.id)
 
         return Response()
     }
 
+    @Transactional
     fun filterAllRecord(): Response{
         val travels = travelRepo.findAllByStatus(RecordStatus.DONE)
         travels.forEach {
             val travelGpsPath = travelGpsPathRepo.findTopByTravelId(it.id) ?: return@forEach
             val datas = travelDataRepo.findAllByTravelIdOrderByTimestamp(it.id)
-            travelGpsPath.filteredPath = GPSFilter(datas).filteredLineStr()
+
+            val gpsFilter = GPSFilter(datas)
+            travelGpsPath.filteredPath = gpsFilter.filteredLineStr
             travelGpsPathRepo.save(travelGpsPath)
+            saveTravelRelaxZone(gpsFilter, it.id)
         }
 
         return Response()
@@ -126,5 +139,53 @@ class RecordService(
         )
     }
 
+    fun saveTravelRelaxZone(gpsFilter: GPSFilter, travelId: String){
+        travelRelaxZoneRepo.deleteAllByTravelId(travelId)
+
+        val clusters = mutableListOf<RelaxZoneCluster>()
+
+
+        val unvisitedCluster = gpsFilter.duplicatedMap
+            .filter { (key, value) -> value > 4 }
+            .map {
+                (key, value) -> RelaxZoneCluster(mutableListOf(key), value)
+            }.toMutableList()
+
+        while(unvisitedCluster.isNotEmpty()){
+            val visit = unvisitedCluster.removeAt(0)
+
+            val nearClusters = unvisitedCluster.filter { it.isNearBy(visit) }
+
+            if(nearClusters.isEmpty()){
+                clusters.add(visit)
+                continue
+            }
+
+            val newCluster = visit.merge(nearClusters)
+
+            unvisitedCluster.removeAll(nearClusters)
+            unvisitedCluster.add(newCluster)
+        }
+
+
+        travelRelaxZoneRepo.saveAll(
+            clusters
+                .filter {
+                    it.cnt > 20
+                }
+                .map { cluster ->
+                    TravelRelaxZone(
+                        travelId = travelId,
+                        area = geometryFactory.createMultiPoint(
+                            cluster.points.map {
+                                geometryFactory.createPoint(it)
+                            }.toTypedArray()
+                        ),
+                        type = "0",
+                        cnt = cluster.cnt
+                    )
+                }
+        )
+    }
 
 }
