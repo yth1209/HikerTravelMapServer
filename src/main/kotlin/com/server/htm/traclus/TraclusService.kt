@@ -210,7 +210,7 @@ class TraclusService(
 
     @Transactional
     fun merge2GlobalCluster(travelId: String): Response {
-        val originTravelClusters = travelClusterRepo.findAll()
+        val originTravelClusters = travelClusterRepo.findAllNearClusterByTravelId(travelId)
         val lineSegments = travelSegmentRepo.findAllLineSegmentByTravelId(travelId)
 
         val unVisitedLines = lineSegments
@@ -251,7 +251,7 @@ class TraclusService(
             unVisitedLines.add(visit)
         }
 
-        travelClusterRepo.deleteAll()
+        travelClusterRepo.deleteAll(originTravelClusters)
         travelClusterRepo.flush()
 
         result
