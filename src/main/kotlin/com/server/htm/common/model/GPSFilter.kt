@@ -31,6 +31,7 @@ class GPSFilter(
 
     fun filterDuplicatedData() {
         unDuplicatedData.add(data[0])
+        duplicatedMap.add(Coordinate(data[0].gps.x, data[0].gps.y))
 
         var isContinue = true
         for(i in 0  ..data.size-2){
@@ -44,10 +45,9 @@ class GPSFilter(
             } else {
                 if(isContinue) {
                     isContinue = false
-                    duplicatedMap.add(Coordinate(data[i].gps.x, data[i].gps.y))
                 }
-                duplicatedMap.add(Coordinate(data[i+1].gps.x, data[i+1].gps.y))
             }
+            duplicatedMap.add(Coordinate(data[i+1].gps.x, data[i+1].gps.y))
         }
     }
 
@@ -81,7 +81,7 @@ class GPSFilter(
         travelDataList.forEach { td ->
             val accuracy = if(td.accuracy < 0) 10.0 else td.accuracy
             if(variance < 0) {
-                variance = accuracy.times(accuracy)
+                variance = accuracy * accuracy
                 lastCoord.x = td.gps.x
                 lastCoord.y = td.gps.y
                 filteredCoords.add(lastCoord.copy())

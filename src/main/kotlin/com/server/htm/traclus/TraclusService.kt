@@ -105,7 +105,6 @@ class TraclusService(
         val clusters = mutableListOf<RelaxZoneCluster>()
 
         val unvisitedCluster = gpsFilter.duplicatedMap
-            .filter { (key, value) -> value > 4 }
             .map { (key, value) ->
                 RelaxZoneCluster(mutableListOf(key), value)
             }.toMutableList()
@@ -155,7 +154,7 @@ class TraclusService(
 
         tRelaxZones.forEach {
             if(it.area == null) return@forEach
-
+            it.area!!.srid = 4326
             val nearRelaxZone = relaxZoneRepo.findTopNearbyPolygon(it.area!!, distance)
             if(nearRelaxZone == null) {
                 relaxZoneRepo.save(

@@ -14,6 +14,7 @@ import com.server.htm.db.repo.TravelGpsPathRepository
 import com.server.htm.db.repo.TravelRelaxZoneRepository
 import com.server.htm.db.repo.TravelRepository
 import com.server.htm.traclus.TraclusService
+import jakarta.transaction.Transactional
 import org.locationtech.jts.geom.Coordinate
 import org.locationtech.jts.geom.GeometryFactory
 import org.springframework.data.repository.findByIdOrNull
@@ -62,6 +63,7 @@ class RecordService(
         return Response()
     }
 
+    @Transactional
     fun endRecord(travelId: String): Response {
         val travel = travelRepo.findByIdOrNull(travelId) ?: return Response("No such travel")
         travel.endTime = OffsetDateTime.now()

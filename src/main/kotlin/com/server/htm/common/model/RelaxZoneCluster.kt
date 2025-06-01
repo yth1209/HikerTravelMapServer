@@ -15,7 +15,7 @@ class RelaxZoneCluster(
     fun isNearBy(point: Coordinate): Boolean {
         return this.points.find {
             val dist = haversineDistance(it, point)
-            dist < 8.0
+            dist < 1.4
         } != null
     }
 
