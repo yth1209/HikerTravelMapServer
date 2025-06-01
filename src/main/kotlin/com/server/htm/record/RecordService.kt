@@ -16,6 +16,7 @@ import com.server.htm.db.repo.TravelDataRepository
 import com.server.htm.db.repo.TravelGpsPathRepository
 import com.server.htm.db.repo.TravelRelaxZoneRepository
 import com.server.htm.db.repo.TravelRepository
+import com.server.htm.traclus.TraclusService
 import jakarta.transaction.Transactional
 import org.locationtech.jts.algorithm.ConvexHull
 import org.locationtech.jts.geom.Coordinate
@@ -33,7 +34,7 @@ class RecordService(
     private val travelDataRepo: TravelDataRepository,
     private val travelGpsPathRepo: TravelGpsPathRepository,
     private val travelRelaxZoneRepo: TravelRelaxZoneRepository,
-
+    private val traclusService: TraclusService
     ) {
     private val geometryFactory = GeometryFactory()
 
@@ -88,26 +89,12 @@ class RecordService(
                 filteredPath = filteredPath
             )
         )
-        saveTravelRelaxZone(gpsFilter, travel.id)
+        traclusService.saveTravelRelaxZone(gpsFilter, travel.id)
+        traclusService.mergeToGlobalRelaxZone(travel)
 
         return Response()
     }
 
-    @Transactional
-    fun filterAllRecord(): Response{
-        val travels = travelRepo.findAllByStatus(RecordStatus.DONE)
-        travels.forEach {
-            val travelGpsPath = travelGpsPathRepo.findTopByTravelId(it.id) ?: return@forEach
-            val datas = travelDataRepo.findAllByTravelIdOrderByTimestamp(it.id)
-
-            val gpsFilter = GPSFilter(datas)
-            travelGpsPath.filteredPath = gpsFilter.filteredLineStr
-            travelGpsPathRepo.save(travelGpsPath)
-            saveTravelRelaxZone(gpsFilter, it.id)
-        }
-
-        return Response()
-    }
 
     fun getRawPath(
     ): GetRawPathsRes{
@@ -138,58 +125,6 @@ class RecordService(
                         acc
                     }
             }
-        )
-    }
-
-    fun saveTravelRelaxZone(gpsFilter: GPSFilter, travelId: String){
-        travelRelaxZoneRepo.deleteAllByTravelId(travelId)
-
-        val clusters = mutableListOf<RelaxZoneCluster>()
-
-
-        val unvisitedCluster = gpsFilter.duplicatedMap
-            .filter { (key, value) -> value > 4 }
-            .map {
-                (key, value) -> RelaxZoneCluster(mutableListOf(key), value)
-            }.toMutableList()
-
-        while(unvisitedCluster.isNotEmpty()){
-            val visit = unvisitedCluster.removeAt(0)
-
-            val nearClusters = unvisitedCluster.filter { it.isNearBy(visit) }
-
-            if(nearClusters.isEmpty()){
-                clusters.add(visit)
-                continue
-            }
-
-            val newCluster = visit.merge(nearClusters)
-
-            unvisitedCluster.removeAll(nearClusters)
-            unvisitedCluster.add(newCluster)
-        }
-
-
-        travelRelaxZoneRepo.saveAll(
-            clusters
-                .filter {
-                    it.cnt > 20
-                }
-                .map { cluster ->
-                    val points = geometryFactory.createMultiPoint(
-                        cluster.points.map {
-                            geometryFactory.createPoint(it)
-                        }.toTypedArray()
-                    )
-
-                    TravelRelaxZone(
-                        travelId = travelId,
-                        points = points,
-                        area = ConvexHull(points).convexHull as? Polygon,
-                        type = "0",
-                        cnt = cluster.cnt
-                    )
-                }
         )
     }
 

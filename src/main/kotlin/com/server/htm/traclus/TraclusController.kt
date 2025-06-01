@@ -11,6 +11,11 @@ class TraclusController(
     private val traclusService: TraclusService
 ) {
 
+    @PostMapping("all/filter")
+    fun filterAllRecord(
+    ): Response {
+        return traclusService.filterAllRecord()
+    }
 
     @PostMapping("partition/all")
     fun partitionAll(
@@ -19,8 +24,10 @@ class TraclusController(
     }
 
     @PostMapping("global/relaxzone/all")
-    fun globalRelaxZone(
+    fun createGlobalRelaxZoneAll(
     ): Response {
-        return traclusService.globalRelaxZone()
+        return traclusService.createGlobalRelaxZoneAll()
     }
+
+
 }

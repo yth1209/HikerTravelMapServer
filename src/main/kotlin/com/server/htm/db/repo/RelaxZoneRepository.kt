@@ -15,7 +15,7 @@ interface RelaxZoneRepository : JpaRepository<RelaxZone, String> {
     WHERE ST_DWithin(
         ST_Transform(rz.area::geometry, 3857),             
         ST_Transform(CAST(:polygon AS geometry), 3857),
-        10
+        :distance
     )
     ORDER BY ST_Distance(
         ST_Transform(rz.area::geometry, 3857),
@@ -24,5 +24,5 @@ interface RelaxZoneRepository : JpaRepository<RelaxZone, String> {
     LIMIT 1;
     """,
         nativeQuery = true)
-    fun findTopNearbyPolygon(@Param("polygon") polygon: Polygon): RelaxZone?
+    fun findTopNearbyPolygon(@Param("polygon") polygon: Polygon, @Param("distance") distance: Double): RelaxZone?
 }

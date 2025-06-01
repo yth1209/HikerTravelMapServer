@@ -30,6 +30,8 @@ dependencies {
 	implementation("org.hibernate.orm:hibernate-spatial")
 	implementation("org.locationtech.jts:jts-core:1.19.0")
 
+	implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.15.+" )
+
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
 	testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
 	testRuntimeOnly("org.junit.platform:junit-platform-launcher")

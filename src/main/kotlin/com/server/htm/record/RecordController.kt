@@ -51,10 +51,4 @@ class RecordController(
     ): GetRawPathsRes{
         return recordService.getFilteredPath()
     }
-
-    @PostMapping("all/filter")
-    fun filterAllRecord(
-    ): Response {
-        return recordService.filterAllRecord()
-    }
 }
