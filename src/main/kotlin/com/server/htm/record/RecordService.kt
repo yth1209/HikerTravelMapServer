@@ -1,32 +1,24 @@
 package com.server.htm.record
 
-import com.server.htm.record.dto.GetRawPathsRes
 import com.server.htm.record.dto.PostDataReq
 import com.server.htm.record.dto.StartRecordReq
 import com.server.htm.common.model.GPSFilter
 import com.server.htm.common.dto.Response
 import com.server.htm.common.enum.ActivityType
 import com.server.htm.common.enum.RecordStatus
-import com.server.htm.common.model.RelaxZoneCluster
 import com.server.htm.db.dao.Travel
 import com.server.htm.db.dao.TravelData
 import com.server.htm.db.dao.TravelGpsPath
-import com.server.htm.db.dao.TravelRelaxZone
 import com.server.htm.db.repo.TravelDataRepository
 import com.server.htm.db.repo.TravelGpsPathRepository
 import com.server.htm.db.repo.TravelRelaxZoneRepository
 import com.server.htm.db.repo.TravelRepository
 import com.server.htm.traclus.TraclusService
-import jakarta.transaction.Transactional
-import org.locationtech.jts.algorithm.ConvexHull
 import org.locationtech.jts.geom.Coordinate
 import org.locationtech.jts.geom.GeometryFactory
-import org.locationtech.jts.geom.Polygon
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import java.time.OffsetDateTime
-import kotlin.collections.component1
-import kotlin.collections.component2
 
 @Service
 class RecordService(
@@ -95,39 +87,6 @@ class RecordService(
         traclusService.mergeToGlobalRelaxZone(travel)
 
         return Response()
-    }
-
-
-    fun getRawPath(
-    ): GetRawPathsRes{
-        return GetRawPathsRes(
-            paths = travelGpsPathRepo.findAll().map {
-                it.rawPath.coordinates
-                    .map { listOf(it.x, it.y) }
-                    .fold(mutableListOf()) { acc, current ->
-                        if (acc.isEmpty() || (acc.last()[0] != current[0] && acc.last()[0] != current[0])) {
-                            acc.add(current)
-                        }
-                        acc
-                    }
-            }
-        )
-    }
-
-    fun getFilteredPath(
-    ): GetRawPathsRes{
-        return GetRawPathsRes(
-            paths = travelGpsPathRepo.findAll().mapNotNull {
-                it.filteredPath?.coordinates
-                    ?.map { listOf(it.x, it.y) }
-                    ?.fold(mutableListOf()) { acc, current ->
-                        if (acc.isEmpty() || (acc.last()[0] != current[0] && acc.last()[0] != current[0])) {
-                            acc.add(current)
-                        }
-                        acc
-                    }
-            }
-        )
     }
 
 }

@@ -1,10 +1,8 @@
 package com.server.htm.record
 
-import com.server.htm.record.dto.GetRawPathsRes
 import com.server.htm.record.dto.PostDataReq
 import com.server.htm.record.dto.StartRecordReq
 import com.server.htm.common.dto.Response
-import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.PutMapping
@@ -38,17 +36,5 @@ class RecordController(
         @PathVariable("travelId") travelId: String
     ): Response{
         return recordService.endRecord(travelId)
-    }
-
-    @GetMapping("path/raw")
-    fun getRawPath(
-    ): GetRawPathsRes{
-        return recordService.getRawPath()
-    }
-
-    @GetMapping("path/filtered")
-    fun getFilterPath(
-    ): GetRawPathsRes{
-        return recordService.getFilteredPath()
     }
 }

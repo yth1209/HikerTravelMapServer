@@ -1,8 +1,8 @@
-package com.server.htm.record.dto
+package com.server.htm.view
 
 import com.server.htm.common.dto.Response
 
-class GetRawPathsRes(
+class GetGeomRes(
     val paths: List<List<List<Double>>>
 ): Response() {
 }
