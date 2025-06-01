@@ -28,4 +28,10 @@ class ViewController(
         return service.getRelaxZones()
     }
 
+    @GetMapping("cluster")
+    fun getCluster(
+    ): GetGeomRes{
+        return service.getCluster()
+    }
+
 }

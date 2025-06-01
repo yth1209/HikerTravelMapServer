@@ -1,6 +1,7 @@
 package com.server.htm.view
 
 import com.server.htm.db.repo.RelaxZoneRepository
+import com.server.htm.db.repo.TravelClusterRepository
 import com.server.htm.db.repo.TravelGpsPathRepository
 import org.locationtech.jts.geom.GeometryFactory
 import org.springframework.stereotype.Service
@@ -8,7 +9,8 @@ import org.springframework.stereotype.Service
 @Service
 class ViewService(
     private val travelGpsPathRepo: TravelGpsPathRepository,
-    private val relaxZoneRepo: RelaxZoneRepository
+    private val relaxZoneRepo: RelaxZoneRepository,
+    private val travelClusterRepo: TravelClusterRepository,
 ) {
     private val geometryFactory = GeometryFactory()
 
@@ -47,5 +49,15 @@ class ViewService(
             }
         )
     }
+    fun getCluster(
+    ): GetGeomRes{
+        return GetGeomRes(
+            paths = travelClusterRepo.findAll().mapNotNull {
+                it.path.coordinates
+                    .map { listOf(it.x, it.y) }
+            }
+        )
+    }
+
 
 }
