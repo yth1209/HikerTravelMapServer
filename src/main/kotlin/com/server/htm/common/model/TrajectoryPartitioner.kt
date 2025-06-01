@@ -54,7 +54,7 @@ class TrajectoryPartitioner(
         val result = mutableListOf<TravelSegment>()
         for(i in 0..cps.size-2){
             val lineLength = haversineDistance(originCoords[cps[i]], originCoords[cps[i+1]])
-            if(lineLength < 2) continue
+            if(lineLength < 1) continue
 
             result.add(
                 TravelSegment(

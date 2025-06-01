@@ -175,8 +175,8 @@ class TraclusService(
         while(unVisitedLines.isNotEmpty()){
             val visit = unVisitedLines.removeAt(0)
             val overlappedLines = unVisitedLines.filter {
-                visit.perpendicularDistance(it) < 3 // 1m inside
-                        && abs(visit.thetaDegree()-it.thetaDegree()) < 10 //3 degree inside
+                visit.perpendicularDistance(it) < 5 // 1m inside
+                        && abs(visit.thetaDegree()-it.thetaDegree()) < 30 //3 degree inside
                         && visit.isOverlappedLine(it)
             }
 
@@ -234,8 +234,8 @@ class TraclusService(
         while(unVisitedLines.isNotEmpty()){
             val visit = unVisitedLines.removeAt(0)
             val overlappedLines = unVisitedLines.filter {
-                visit.perpendicularDistance(it) < 3 // 1m inside
-                        && abs(visit.thetaDegree()-it.thetaDegree()) < 10 //3 degree inside
+                visit.perpendicularDistance(it) < 5 // 1m inside
+                        && abs(visit.thetaDegree()-it.thetaDegree()) < 30 //3 degree inside
                         && visit.isOverlappedLine(it)
             }
 
