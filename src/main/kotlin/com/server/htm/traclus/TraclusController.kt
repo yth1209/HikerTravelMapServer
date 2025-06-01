@@ -1,6 +1,7 @@
 package com.server.htm.traclus
 
 import com.server.htm.common.dto.Response
+import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
@@ -29,5 +30,17 @@ class TraclusController(
         return traclusService.createGlobalRelaxZoneAll()
     }
 
+    @PostMapping("cluster/all")
+    fun mergeAllGlobalCluster(
+    ): Response {
+        return traclusService.mergeAllGlobalCluster()
+    }
+
+    @PostMapping("travel/{travelId}/cluster/all")
+    fun merge2GlobalCluster(
+        @PathVariable("travelId") travelId: String,
+    ): Response {
+        return traclusService.merge2GlobalCluster(travelId)
+    }
 
 }

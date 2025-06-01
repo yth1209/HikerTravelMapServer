@@ -87,7 +87,7 @@ class RecordService(
 
         traclusService.saveTravelRelaxZone(gpsFilter, travel.id)
         traclusService.mergeToGlobalRelaxZone(travel)
-
+        traclusService.merge2GlobalCluster(travelId)
         return Response()
     }
 

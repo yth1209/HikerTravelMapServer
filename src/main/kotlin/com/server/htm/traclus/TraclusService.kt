@@ -3,15 +3,19 @@ package com.server.htm.traclus
 import com.server.htm.common.dto.Response
 import com.server.htm.common.enum.RecordStatus
 import com.server.htm.common.model.GPSFilter
+import com.server.htm.common.model.Line
 import com.server.htm.common.model.RelaxZoneCluster
 import com.server.htm.common.model.TrajectoryPartitioner
+import com.server.htm.common.theta
 import com.server.htm.db.dao.ConfigTypes
 import com.server.htm.db.dao.RelaxZone
 import com.server.htm.db.dao.Travel
+import com.server.htm.db.dao.TravelCluster
 import com.server.htm.db.dao.TravelGpsPath
 import com.server.htm.db.dao.TravelRelaxZone
 import com.server.htm.db.repo.CustomConfigsRepository
 import com.server.htm.db.repo.RelaxZoneRepository
+import com.server.htm.db.repo.TravelClusterRepository
 import com.server.htm.db.repo.TravelDataRepository
 import com.server.htm.db.repo.TravelGpsPathRepository
 import com.server.htm.db.repo.TravelRelaxZoneRepository
@@ -22,6 +26,7 @@ import org.locationtech.jts.algorithm.ConvexHull
 import org.locationtech.jts.geom.GeometryFactory
 import org.locationtech.jts.geom.Polygon
 import org.springframework.stereotype.Service
+import kotlin.math.abs
 
 @Service
 class TraclusService(
@@ -31,7 +36,8 @@ class TraclusService(
     private val travelSegmentRepo: TravelSegmentRepository,
     private val travelRelaxZoneRepo: TravelRelaxZoneRepository,
     private val relaxZoneRepo: RelaxZoneRepository,
-    private val customConfigsRepo: CustomConfigsRepository
+    private val customConfigsRepo: CustomConfigsRepository,
+    private val travelClusterRepo: TravelClusterRepository,
 ) {
     private val geometryFactory = GeometryFactory()
 
@@ -146,6 +152,126 @@ class TraclusService(
                 }
         )
     }
+
+    @Transactional
+    fun mergeAllGlobalCluster(): Response {
+        travelClusterRepo.deleteAll()
+        travelClusterRepo.flush()
+
+//        val lineSegments = travelSegmentRepo.findAllLineSegmentByTravelId("ecd438fbf6864b30a83166471882a1cd")
+        val lineSegments = travelSegmentRepo.findAllLineSegment()
+
+        val unVisitedLines = lineSegments
+            .mapNotNull {
+                if(it.coordinates.size < 2) return@mapNotNull null
+
+                if(theta(it.coordinates[0], it.coordinates[1]) >= 0)
+                    Line(it.coordinates[0], it.coordinates[1])
+                else
+                    Line(it.coordinates[1], it.coordinates[0])
+            }.toMutableList()
+
+        var result = mutableListOf<Line>()
+        while(unVisitedLines.isNotEmpty()){
+            val visit = unVisitedLines.removeAt(0)
+            val overlappedLines = unVisitedLines.filter {
+                visit.perpendicularDistance(it) < 3 // 1m inside
+                        && abs(visit.thetaDegree()-it.thetaDegree()) < 10 //3 degree inside
+                        && visit.isOverlappedLine(it)
+            }
+
+            if(overlappedLines.isEmpty()){
+                result.add(visit)
+                continue
+            }
+
+            overlappedLines.forEach {
+                visit.mergeLine(it)
+            }
+            unVisitedLines.removeAll(overlappedLines)
+            unVisitedLines.add(visit)
+        }
+
+        result
+            .map {
+                TravelCluster(
+                    path = geometryFactory.createLineString(
+                    arrayOf(it.s, it.e)
+                    )
+                )
+            }
+            .chunked(100)
+            .forEach {
+                travelClusterRepo.saveAll(it)
+            }
+
+        return Response("OK")
+    }
+
+    @Transactional
+    fun merge2GlobalCluster(travelId: String): Response {
+        val originTravelClusters = travelClusterRepo.findAll()
+        val lineSegments = travelSegmentRepo.findAllLineSegmentByTravelId(travelId)
+
+        val unVisitedLines = lineSegments
+            .mapNotNull {
+                if(it.coordinates.size < 2) return@mapNotNull null
+
+                if(theta(it.coordinates[0], it.coordinates[1]) >= 0)
+                    Line(it.coordinates[0], it.coordinates[1])
+                else
+                    Line(it.coordinates[1], it.coordinates[0])
+            }.toMutableList()
+
+        unVisitedLines.addAll(
+            originTravelClusters.mapNotNull {
+                if(it.path.coordinates.size < 2) return@mapNotNull null
+                Line(it.path.coordinates[0], it.path.coordinates[1])
+            }
+        )
+
+        var result = mutableListOf<Line>()
+        while(unVisitedLines.isNotEmpty()){
+            val visit = unVisitedLines.removeAt(0)
+            val overlappedLines = unVisitedLines.filter {
+                visit.perpendicularDistance(it) < 3 // 1m inside
+                        && abs(visit.thetaDegree()-it.thetaDegree()) < 10 //3 degree inside
+                        && visit.isOverlappedLine(it)
+            }
+
+            if(overlappedLines.isEmpty()){
+                result.add(visit)
+                continue
+            }
+
+            overlappedLines.forEach {
+                visit.mergeLine(it)
+            }
+            unVisitedLines.removeAll(overlappedLines)
+            unVisitedLines.add(visit)
+        }
+
+        travelClusterRepo.deleteAll()
+        travelClusterRepo.flush()
+
+        result
+            .map {
+                TravelCluster(
+                    path = geometryFactory.createLineString(
+                        arrayOf(it.s, it.e)
+                    )
+                )
+            }
+            .chunked(300)
+            .forEach {
+                travelClusterRepo.saveAll(it)
+            }
+
+        return Response("OK")
+    }
+
+
+
 
     fun mergeToGlobalRelaxZone(travel: Travel){
         val configs = customConfigsRepo.findTopByType(ConfigTypes.RELAX_ZONE) ?:  return

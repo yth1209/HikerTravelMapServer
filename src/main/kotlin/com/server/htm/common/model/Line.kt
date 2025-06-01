@@ -1,18 +1,32 @@
 package com.server.htm.common.model
 
+import com.server.htm.common.*
 import org.locationtech.jts.geom.Coordinate
 import org.locationtech.jts.geom.GeometryFactory
 import kotlin.math.*
 
 class Line(
-    val s: Coordinate,
-    val e: Coordinate
+    var s: Coordinate,
+    var e: Coordinate
 ) {
     private val geometryFactory = GeometryFactory()
 
+    fun theta() = theta(s, e)
+    fun thetaDegree() = thetaDegree(s, e)
+
     fun length(): Double = lineLength(s,e)
 
-    fun lineLength(s: Coordinate, e: Coordinate): Double = sqrt((s.x - e.x).pow(2) + (s.y - e.y).pow(2))
+    private fun lineLength(s: Coordinate, e: Coordinate): Double = sqrt((s.x - e.x).pow(2) + (s.y - e.y).pow(2))
+
+
+    fun mergeLine(line: Line) {
+        if(lineLength(s, e) < lineLength(s, line.e)){
+            this.e = line.e.copy()
+        }
+        if(lineLength(s, e) < lineLength(line.s, e)){
+            this.s = line.s.copy()
+        }
+    }
 
     //return a,b,c s.t ax+by+c=0 through this line
     fun linearEquation(): Triple<Double, Double, Double>{
@@ -23,13 +37,9 @@ class Line(
     }
 
     fun perpendicularDistance(point: Coordinate): Double {
-        val (a,b,c) = this.linearEquation()
-        val denom = a * a + b * b
-        if (denom == 0.0)
-            return lineLength(point, this.s)
+        val projectionP = projectionCoordinate(point)
 
-        return abs(a*point.x + b*point.y + c)
-            .div(sqrt(a.pow(2)+b.pow(2)))
+        return haversineDistance(projectionP, point)
     }
 
     fun parallelDistance(point: Coordinate): Double {
@@ -54,51 +64,45 @@ class Line(
         return Coordinate(x,y)
     }
 
-    fun perpendicularDistance(line1: Line, line2: Line): Double {
-        val l1 = line2.perpendicularDistance(line1.s)
-        val l2 = line2.perpendicularDistance(line1.e)
+    fun isOverlappedPoint(point: Coordinate): Boolean {
+        val minX = min(s.x, e.x)
+        val maxX = max(s.x, e.x)
+        val minY = min(s.y, e.y)
+        val maxY = max(s.y, e.y)
+
+        return point.x in minX..maxX && point.y in minY..maxY
+    }
+
+    fun isOverlappedLine(line: Line): Boolean {
+        val p1 = this.projectionCoordinate(line.s)
+        val p2 = this.projectionCoordinate(line.e)
+
+        return isOverlappedPoint(p1) || isOverlappedPoint(p2)
+    }
+
+    fun perpendicularDistance(line: Line): Double {
+        val l1 = line.perpendicularDistance(this.s)
+        val l2 = line.perpendicularDistance(this.e)
         return (l1.pow(2)+l2.pow(2))/(l1 + l2)
     }
 
-    fun parallelDistance(line1: Line, line2: Line): Double {
-        val l1 = line2.parallelDistance(line1.s)
-        val l2 = line2.parallelDistance(line1.e)
+    fun parallelDistance(line: Line): Double {
+        val l1 = line.parallelDistance(this.s)
+        val l2 = line.parallelDistance(this.e)
 
         return min(l1, l2)
     }
 
-    fun angleDistance(line1: Line, line2: Line): Double {
-        val theta = abs(line1.theta() -line2.theta()) % PI
-        return if(0 <= line2.theta() && line2.theta() < PI/2){
-            line1.length() * sin(theta)
+    fun angleDistance(line: Line): Double {
+        val theta = abs(this.theta() -line.theta()) % PI
+        return if(0 <= this.theta() && line.theta() < PI/2){
+            this.length() * sin(theta)
         } else {
-            line1.length()
+            this.length()
         }
     }
 
-    companion object {
-        fun perpendicularDistance(line1: Line, line2: Line): Double {
-            val l1 = line2.perpendicularDistance(line1.s)
-            val l2 = line2.perpendicularDistance(line1.e)
-            return (l1.pow(2)+l2.pow(2))/(l1 + l2)
-        }
-
-        fun parallelDistance(line1: Line, line2: Line): Double {
-            val l1 = line2.parallelDistance(line1.s)
-            val l2 = line2.parallelDistance(line1.e)
-
-            return min(l1, l2)
-        }
-
-        fun angleDistance(line1: Line, line2: Line): Double {
-            val theta = abs(line1.theta() -line2.theta()) % PI
-            return if(0 <= line2.theta() && line2.theta() < PI/2){
-                line1.length() * sin(theta)
-            } else {
-                line1.length()
-            }
-        }
+    fun copy(): Line {
+        return Line(s,e)
     }
-
-    fun theta(): Double = atan2(e.y-s.y, e.x-s.x)
 }

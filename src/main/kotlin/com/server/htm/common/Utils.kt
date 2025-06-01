@@ -15,6 +15,7 @@ fun theta(s: Coordinate, e: Coordinate): Double = atan2(e.y-s.y, e.x-s.x)
 
 fun thetaDegree(s: Coordinate, e: Coordinate): Double = Math.toDegrees(theta(s,e))
 
+
 fun haversineDistance(lat1: Double, lon1: Double, lat2: Double, lon2: Double): Double {
     val R = 6371000.0 // 지구 반지름 (미터)
 

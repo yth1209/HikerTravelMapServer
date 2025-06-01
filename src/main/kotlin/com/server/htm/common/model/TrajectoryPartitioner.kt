@@ -1,6 +1,7 @@
 package com.server.htm.common.model
 
 import com.server.htm.common.dirVector
+import com.server.htm.common.haversineDistance
 import com.server.htm.common.theta
 import com.server.htm.common.thetaDegree
 import com.server.htm.db.dao.CustomConfigs
@@ -52,6 +53,9 @@ class TrajectoryPartitioner(
 
         val result = mutableListOf<TravelSegment>()
         for(i in 0..cps.size-2){
+            val lineLength = haversineDistance(originCoords[cps[i]], originCoords[cps[i+1]])
+            if(lineLength < 2) continue
+
             result.add(
                 TravelSegment(
                     travelId = travelId,
