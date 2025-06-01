@@ -8,6 +8,7 @@ import com.server.htm.common.model.TrajectoryPartitioner
 import com.server.htm.db.dao.ConfigTypes
 import com.server.htm.db.dao.RelaxZone
 import com.server.htm.db.dao.Travel
+import com.server.htm.db.dao.TravelGpsPath
 import com.server.htm.db.dao.TravelRelaxZone
 import com.server.htm.db.repo.CustomConfigsRepository
 import com.server.htm.db.repo.RelaxZoneRepository
@@ -34,28 +35,6 @@ class TraclusService(
 ) {
     private val geometryFactory = GeometryFactory()
 
-    fun partitionAll(
-    ): Response {
-        travelSegmentRepo.deleteAll()
-        travelGpsPathRepo.findAll()
-            .forEach { travelGpsPath ->
-                travelGpsPath.filteredPath?.let { path ->
-                    if(path.isEmpty) return@forEach
-                    val travelSegments = TrajectoryPartitioner(travelGpsPath.travelId, path).partition()
-                    if(travelSegments.isEmpty()) return@forEach
-
-                    travelSegmentRepo.saveAll(travelSegments)
-
-
-                    travelGpsPath.segmentPath = geometryFactory.createLineString(
-                        travelSegments.map { it.lineSegment.coordinates }.reduce { a, b -> a + b }
-                    )
-                    travelGpsPathRepo.save(travelGpsPath)
-                }
-            }
-        return Response("OK")
-    }
-
     @Transactional
     fun filterAllRecord(): Response{
         val travels = travelRepo.findAllByStatus(RecordStatus.DONE)
@@ -70,6 +49,39 @@ class TraclusService(
         }
 
         return Response()
+    }
+
+    fun partitionAll(
+    ): Response {
+        travelSegmentRepo.deleteAll()
+
+        travelGpsPathRepo.findAll()
+            .forEach { travelGpsPath ->
+                travelGpsPath.filteredPath?.let { path ->
+                    partition(travelGpsPath)
+                }
+            }
+        return Response("OK")
+    }
+
+    fun partition(travelGpsPath: TravelGpsPath) {
+        val travelSegmentConfig = customConfigsRepo.findTopByType(ConfigTypes.TRAVEL_SEGMENTATION)
+            ?: throw Exception("No such travel segments configs")
+
+        travelGpsPath.filteredPath?.let { path ->
+            if(path.isEmpty) return
+
+            val travelSegments = TrajectoryPartitioner(travelGpsPath.travelId, path).partition(travelSegmentConfig)
+            if(travelSegments.isEmpty()) return
+
+            travelSegmentRepo.saveAll(travelSegments)
+
+
+            travelGpsPath.segmentPath = geometryFactory.createLineString(
+                travelSegments.map { it.lineSegment.coordinates }.reduce { a, b -> a + b }
+            )
+            travelGpsPathRepo.save(travelGpsPath)
+        }
     }
 
     @Transactional

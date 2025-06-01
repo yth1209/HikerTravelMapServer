@@ -9,6 +9,12 @@ fun uuid() = UUID.randomUUID().toString().replace("-", "")
 fun haversineDistance(point1: Coordinate, point2: Coordinate): Double =
     haversineDistance(point1.y, point1.x, point2.y, point2.x)
 
+fun dirVector(s: Coordinate, e: Coordinate) = Coordinate(e.x - s.x, e.y - s.y)
+
+fun theta(s: Coordinate, e: Coordinate): Double = atan2(e.y-s.y, e.x-s.x)
+
+fun thetaDegree(s: Coordinate, e: Coordinate): Double = Math.toDegrees(theta(s,e))
+
 fun haversineDistance(lat1: Double, lon1: Double, lat2: Double, lon2: Double): Double {
     val R = 6371000.0 // 지구 반지름 (미터)
 

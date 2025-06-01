@@ -33,5 +33,6 @@ data class CustomConfigs(
 }
 
 enum class ConfigTypes(){
+    TRAVEL_SEGMENTATION,
     RELAX_ZONE
 }

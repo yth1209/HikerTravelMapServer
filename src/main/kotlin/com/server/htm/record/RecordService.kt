@@ -82,13 +82,15 @@ class RecordService(
 
         val gpsFilter = GPSFilter(datas)
         val filteredPath = gpsFilter.filteredLineStr
-        travelGpsPathRepo.save(
+        val travelGpsPath = travelGpsPathRepo.save(
             TravelGpsPath(
                 travelId = travel.id,
                 rawPath = rawPath,
                 filteredPath = filteredPath
             )
         )
+        traclusService.partition(travelGpsPath)
+
         traclusService.saveTravelRelaxZone(gpsFilter, travel.id)
         traclusService.mergeToGlobalRelaxZone(travel)
 
